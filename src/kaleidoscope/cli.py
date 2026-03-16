@@ -14,7 +14,7 @@ from kaleidoscope.synthesizer import synthesize_report
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="kaleidoscope",
-        description="Rotate an ambiguous engineering problem through multiple diagnostic lenses.",
+        description="Pressure-test an ambiguous engineering decision through multiple diagnostic lenses.",
     )
     parser.add_argument(
         "problem",

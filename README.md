@@ -1,6 +1,14 @@
 # Kaleidoscope
 
-Kaleidoscope is a local-first, markdown-driven diagnostic thinking tool for engineering leaders working through messy technical, organizational, and strategic decisions. It is designed to help a person think better in gray areas, not to force binary answers or pretend to automate judgment.
+Kaleidoscope is a local-first, markdown-driven pre-decision review tool for engineering leaders working through messy technical, organizational, and strategic calls. It is designed to help a person pressure-test judgment in gray areas before they socialize a decision, not to force binary answers or pretend to automate leadership judgment.
+
+You can think of it as a private decision companion:
+
+- start with a messy thought
+- clarify what is actually being decided
+- rotate the problem through multiple lenses
+- surface blind spots, tensions, tradeoffs, and next-step ideas
+- leave with a reusable decision artifact instead of a disposable chat thread
 
 This V1 prototype is intentionally simple:
 
@@ -10,6 +18,23 @@ This V1 prototype is intentionally simple:
 - It loads lens definitions from markdown files on disk.
 - It generates one markdown review per lens plus a synthesized master report.
 - It supports custom lenses by dropping a new markdown file into `lenses/`.
+
+## Positioning
+
+Kaleidoscope is not trying to be a general AI workspace, a knowledge base, or a planning tool.
+
+Its wedge is narrower and more specific:
+
+- a private pre-decision review flow for engineering leaders
+- a way to pressure-test an ambiguous technical or organizational call before committing
+- a way to turn fuzzy judgment into a reusable markdown artifact
+
+That means Kaleidoscope is most valuable when the problem is sensitive, gray-area, and hard to reason through alone, such as:
+
+- whether to centralize a platform capability
+- whether to re-draw ownership boundaries
+- whether to make a foundational engineering investment now or later
+- whether a migration is strategically right but organizationally risky
 
 ## V1 Scope And Intent
 
@@ -30,6 +55,8 @@ Kaleidoscope is not trying to solve:
 - authentication
 - formal scoring
 - enterprise-scale workflows
+- generic brainstorming for everything
+- project tracking or roadmap management
 
 ## Project Structure
 
@@ -85,7 +112,7 @@ PYTHONPATH=src python3 -m kaleidoscope "This migration seems technically right b
 
 ## Questioning Flow
 
-Kaleidoscope begins with a rough problem statement and then asks a short series of clarifying questions. The goal is to gather enough context to do useful analysis without turning the experience into a rigid survey.
+Kaleidoscope begins with a rough problem statement and then asks a short series of clarifying questions. The goal is to gather enough context to do useful pre-decision analysis without turning the experience into a rigid survey.
 
 The built-in question flow covers areas such as:
 
@@ -97,6 +124,8 @@ The built-in question flow covers areas such as:
 - which risks or assumptions already feel important
 
 The flow stops once enough context is gathered or when the maximum question count is reached.
+
+The intended feeling is closer to a thoughtful strategic check-in than a form fill.
 
 ## How Lens Files Work
 
@@ -132,6 +161,8 @@ Each run creates:
 - a master synthesis report at `reports/Kaleidoscope_Report.md`
 
 The `reports/` directory is intentionally local-only in this repo. Generated notes and diagnostic artifacts are ignored by git so a user can think in private without accidentally committing working notes.
+
+That local-only default is part of the product stance: the working notes are for the decision-maker first. Kaleidoscope is meant to help someone get sharper before the meeting, memo, or org announcement, not turn every draft thought into a shared system artifact.
 
 The lens-specific reports include:
 
@@ -182,6 +213,19 @@ This version makes a few intentional simplifications:
 - Reports are overwritten on each run in the configured `reports/` directory.
 
 These tradeoffs keep the prototype understandable and local-first while still preserving the product intent.
+
+## Why This Shape
+
+Kaleidoscope is intentionally framed as a decision-support product, not a generic assistant.
+
+The bet behind the product is that engineering leaders often need a private place to think through calls that are:
+
+- strategically consequential
+- politically sensitive
+- technically ambiguous
+- difficult to reason about from a single perspective
+
+The value is not just "getting AI output." The value is producing a clearer decision artifact with explicit tradeoffs, blind spots, tensions, and follow-up questions.
 
 ## Future Improvements
 
