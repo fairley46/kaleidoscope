@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 import textwrap
-from collections import Counter
+from dataclasses import dataclass
 from typing import Protocol
 
 from kaleidoscope.lens_loader import extract_bullets
@@ -65,22 +65,6 @@ class HeuristicAnalysisProvider:
             f"**{analysis.lens_name}:** {analysis.summary}" for analysis in analyses
         ]
 
-        repeated_open_questions = _top_items(
-            item
-            for analysis in analyses
-            for item in analysis.open_questions
-        )
-        aggregated_tradeoffs = _top_items(
-            item
-            for analysis in analyses
-            for item in analysis.tradeoffs
-        )
-        aggregated_recommendations = _top_items(
-            item
-            for analysis in analyses
-            for item in analysis.recommendations
-        )
-
         present = _present_tokens(analyses)
         blind_spots = _build_blind_spots(context, themes)
         tensions = _build_tensions(themes, analyses, present)
@@ -97,9 +81,9 @@ class HeuristicAnalysisProvider:
             reinforcements=reinforcements,
             tensions=tensions,
             blind_spots=blind_spots,
-            open_questions=_interleave_questions(analyses)[:8] or repeated_open_questions[:6],
-            recommendations=_interleave_field(analyses, "recommendations")[:6] or aggregated_recommendations[:6],
-            tradeoffs=_interleave_field(analyses, "tradeoffs")[:6] or aggregated_tradeoffs[:6],
+            open_questions=_interleave(analyses, "open_questions", 8),
+            recommendations=_interleave(analyses, "recommendations", 6),
+            tradeoffs=_interleave(analyses, "tradeoffs", 6),
             confidence_note=confidence_note,
         )
 
@@ -807,37 +791,6 @@ def _build_reinforcements(themes: set[str], present: set[str]) -> list[str]:
     return _dedupe(reinforcements)[:6] or [
         "No strong cross-perspective reinforcement stood out from the current framing."
     ]
-
-
-def _interleave_field(analyses: list[LensAnalysis], field_name: str) -> list[str]:
-    buckets = [list(getattr(analysis, field_name)) for analysis in analyses]
-    return _interleave_buckets(buckets)
-
-
-def _interleave_questions(analyses: list[LensAnalysis]) -> list[str]:
-    return _interleave_buckets([list(analysis.open_questions) for analysis in analyses])
-
-
-def _interleave_buckets(buckets: list[list[str]]) -> list[str]:
-    result: list[str] = []
-    seen: set[str] = set()
-    index = 0
-    while True:
-        progressed = False
-        for bucket in buckets:
-            if index >= len(bucket):
-                continue
-            item = bucket[index].strip()
-            progressed = True
-            key = item.lower()
-            if not item or key in seen:
-                continue
-            seen.add(key)
-            result.append(item)
-        if not progressed:
-            break
-        index += 1
-    return result
 
 
 def _build_confidence_note(context: ProblemContext, analyses: list[LensAnalysis]) -> str:
