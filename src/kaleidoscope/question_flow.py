@@ -31,7 +31,7 @@ QUESTION_BANK = [
     ),
     QuestionSpec(
         "options",
-        "What options are already on the table, including doing nothing or waiting?",
+        "What paths are already in view, including waiting or leaving this alone?",
     ),
     QuestionSpec(
         "risks",

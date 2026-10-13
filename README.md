@@ -2,30 +2,21 @@
 
 [![CI](https://github.com/fairley46/kaleidoscope/actions/workflows/ci.yml/badge.svg)](https://github.com/fairley46/kaleidoscope/actions/workflows/ci.yml)
 
-Kaleidoscope helps you think about a problem from multiple angles. It gathers perspectives from the company, team, culture, strategy, and roadmap, alongside technical, operational, financial, and user views, and shows how those perspectives fit together.
-
-It is not mainly a decision tool. People do better work when they have the reasoning, not just the conclusion.
+Kaleidoscope explores a problem from multiple perspectives and writes the notes to disk.
 
 ![Kaleidoscope CLI demo](docs/demo.png)
 
 ## What it does
 
-You start with a rough problem statement. Kaleidoscope asks a short set of clarifying questions, then explores the problem through markdown lenses. It writes one review per lens and a master report under `reports/`.
+You start with a rough problem statement. Kaleidoscope asks a short set of clarifying questions, then reads the problem through nine perspectives: Company, Team, Culture, Strategy, Roadmap, Technical, Operational, Financial, and User. It writes one note per perspective and a master report under `reports/`.
 
-The master report shows:
+The master report leads with an exploration overview. Then it lists each perspective, where those perspectives reinforce each other, tensions between them, and open questions. Optional next steps sit in a later section.
 
-- each perspective
-- where perspectives reinforce each other
-- tensions between them
-- open questions
+## Local files
 
-Optional next steps stay secondary. The point is the path through the problem, not a verdict.
+Kaleidoscope writes markdown on your machine. You can edit the files and reread them before you share them.
 
-## Why local files
-
-Kaleidoscope writes markdown on your machine. You can edit the files, reread them, and share the reasoning when you are ready.
-
-V1 analysis is `HeuristicAnalysisProvider` in `providers.py`. That class uses only the Python standard library. `cli.py` constructs it. A model-backed provider can implement `AnalysisProvider`.
+V1 analysis is `HeuristicAnalysisProvider` in `providers.py`. That class uses the Python standard library only. `cli.py` constructs it. Another provider can implement `AnalysisProvider`.
 
 ## Quickstart
 
@@ -55,14 +46,11 @@ Each run writes one `*_Review.md` per lens and `reports/Kaleidoscope_Report.md`.
 
 ## Lenses
 
-Default lenses:
-
-- Company, Team, Culture, Strategy, Roadmap
-- Technical, Operational, Financial, User
+The default lenses are Company, Team, Culture, Strategy, Roadmap, Technical, Operational, Financial, and User.
 
 Copy `templates/Lens_Template.md` into `lenses/` and run Kaleidoscope again. The loader reads every `.md` file in that directory.
 
-## Architecture
+## Layout
 
 ```text
 kaleidoscope/
@@ -82,7 +70,7 @@ kaleidoscope/
 
 ## Status
 
-This is a V1 prototype. `HeuristicAnalysisProvider` does not call a model. There is no user interface, authentication, or collaboration.
+This is a V1 prototype. `HeuristicAnalysisProvider` does not call a model. There is no web interface, authentication, or shared editing.
 
 ## License
 

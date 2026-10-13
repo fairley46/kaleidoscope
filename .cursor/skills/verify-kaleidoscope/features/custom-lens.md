@@ -29,5 +29,5 @@ Preconditions:
 ## Gotchas
 
 - Sorted glob order means new lenses appear alphabetically among reviews.
-- Specialized heuristic handlers match substrings in the lens name. A name that accidentally contains `user`, `culture`, or similar may take the wrong specialized path.
+- The first token found in the lens name selects the handler. Token order is company, team, culture, strategy, roadmap, technical, operational, financial, user. A later token in the same name does not override an earlier one.
 - Never commit a throwaway verification lens.
