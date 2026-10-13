@@ -2,25 +2,25 @@
 
 [![CI](https://github.com/fairley46/kaleidoscope/actions/workflows/ci.yml/badge.svg)](https://github.com/fairley46/kaleidoscope/actions/workflows/ci.yml)
 
-Local-first CLI that pressure-tests an ambiguous engineering decision through markdown lenses, then writes a reusable decision artifact.
+Local-first CLI that reviews an ambiguous engineering decision with markdown lenses and writes the reviews to disk.
 
 ![Kaleidoscope CLI demo](docs/demo.png)
 
 ## Pitch
 
-You start with a messy thought. Kaleidoscope asks a short clarifying set, rotates the problem through Technical, Culture, Operational, Financial, and User lenses, and leaves lens reviews plus a master synthesis under `reports/`.
+You start with a rough problem statement. Kaleidoscope asks a short set of clarifying questions, then reviews the problem with the Technical, Culture, Operational, Financial, and User lenses. It writes one review per lens and a master report under `reports/`.
 
-It is a private pre-decision companion for engineering leaders, not a general AI workspace and not a substitute for judgment.
+It is a private pre-decision review for engineering leaders.
 
 ## Why
 
-Gray-area calls are hard to reason through alone. A single chat thread is disposable. Kaleidoscope turns the same rough prompt into inspectable markdown you can edit, keep local, and reuse before you socialize a decision.
+Kaleidoscope writes the rough problem statement to markdown on your machine. You can edit the files and reread them before you share the decision.
 
-V1 uses a heuristic analysis provider (stdlib only) behind an explicit provider boundary so a model-backed implementation can plug in later without rewriting the CLI or report pipeline.
+V1 analysis is `HeuristicAnalysisProvider` in `providers.py`. That class uses only the Python standard library. `cli.py` constructs it. A model-backed provider can implement `AnalysisProvider`.
 
 ## Quickstart
 
-Requires Python 3.9+.
+You need Python 3.9 or newer.
 
 ```bash
 git clone https://github.com/fairley46/kaleidoscope.git
@@ -30,7 +30,7 @@ source .venv/bin/activate
 pip install -e .
 ```
 
-Run with a rough prompt (answers can be typed interactively, or piped):
+Run a rough prompt. Type the answers at the prompts, or pipe them on stdin:
 
 ```bash
 kaleidoscope "We should centralize this platform capability, but I am worried about downstream effects."
@@ -42,7 +42,7 @@ Without installing the console script:
 PYTHONPATH=src python3 -m kaleidoscope "This migration seems technically right but organizationally risky."
 ```
 
-Each run writes one `*_Review.md` per lens and `reports/Kaleidoscope_Report.md`. Generated reports stay gitignored so working notes remain local.
+Each run writes one `*_Review.md` per lens and `reports/Kaleidoscope_Report.md`. Git ignores generated files in `reports/`.
 
 ## Architecture
 
@@ -50,23 +50,23 @@ Each run writes one `*_Review.md` per lens and `reports/Kaleidoscope_Report.md`.
 kaleidoscope/
   lenses/                 # editable markdown lens definitions
   templates/              # Lens_Template.md for custom lenses
-  reports/                # local-only generated reviews (gitignored)
+  reports/                # generated reviews, gitignored
   src/kaleidoscope/
     cli.py                # argparse entry
     question_flow.py      # clarifying questions
     lens_loader.py        # markdown lens parser
-    providers.py          # AnalysisProvider + heuristic implementation
+    providers.py          # AnalysisProvider and HeuristicAnalysisProvider
     analyzer.py           # per-lens analysis
     synthesizer.py        # cross-lens synthesis
     report_writer.py      # markdown report output
-  tests/                  # unittest smoke pin
+  tests/                  # unittest smoke test
 ```
 
-Add a custom lens by copying `templates/Lens_Template.md` into `lenses/` and re-running. No code change required.
+Copy `templates/Lens_Template.md` into `lenses/` and run Kaleidoscope again. The loader reads every `.md` file in that directory.
 
 ## Status
 
-V1 prototype. Useful locally for private pre-decision reviews. Heuristic provider only. No UI, auth, collaboration, or live model calls yet.
+This is a V1 prototype. `HeuristicAnalysisProvider` does not call a model. There is no user interface, authentication, or collaboration.
 
 ## License
 
