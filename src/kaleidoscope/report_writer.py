@@ -64,7 +64,7 @@ def _lens_review_markdown(context: ProblemContext, analysis: LensAnalysis) -> st
     lines.extend(f"- {item}" for item in analysis.risks)
     lines.extend(["", "## Tradeoffs"])
     lines.extend(f"- {item}" for item in analysis.tradeoffs)
-    lines.extend(["", "## Recommendations"])
+    lines.extend(["", "## Optional Next Steps"])
     lines.extend(f"- {item}" for item in analysis.recommendations)
     lines.extend(["", "## Open Questions"])
     lines.extend(f"- {item}" for item in analysis.open_questions)
@@ -93,22 +93,22 @@ def _synthesis_markdown(context: ProblemContext, synthesis: SynthesisReport) -> 
         "## Problem Overview",
         synthesis.problem_overview,
         "",
-        "## Executive Synthesis",
-        synthesis.executive_synthesis,
+        "## Exploration Overview",
+        synthesis.exploration_overview,
         "",
-        "## Lens Highlights",
+        "## Perspectives",
     ]
-    lines.extend(f"- {item}" for item in synthesis.lens_highlights)
-    lines.extend(["", "## Blind Spots"])
-    lines.extend(f"- {item}" for item in synthesis.blind_spots)
-    lines.extend(["", "## Cross-Lens Tensions"])
-    lines.extend(f"- {item}" for item in synthesis.cross_lens_tensions)
-    lines.extend(["", "## Tradeoffs"])
-    lines.extend(f"- {item}" for item in synthesis.tradeoffs)
-    lines.extend(["", "## Recommendations / Ideas"])
-    lines.extend(f"- {item}" for item in synthesis.recommendations)
+    lines.extend(f"- {item}" for item in synthesis.perspectives)
+    lines.extend(["", "## Where Perspectives Reinforce"])
+    lines.extend(f"- {item}" for item in synthesis.reinforcements)
+    lines.extend(["", "## Tensions Between Perspectives"])
+    lines.extend(f"- {item}" for item in synthesis.tensions)
     lines.extend(["", "## Open Questions"])
     lines.extend(f"- {item}" for item in synthesis.open_questions)
+    lines.extend(["", "## Blind Spots"])
+    lines.extend(f"- {item}" for item in synthesis.blind_spots)
+    lines.extend(["", "## Optional Next Steps"])
+    lines.extend(f"- {item}" for item in synthesis.recommendations)
     lines.extend(
         [
             "",

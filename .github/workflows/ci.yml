@@ -33,4 +33,7 @@ jobs:
             --max-questions 6 \
             --reports-dir "$RUNNER_TEMP/ks-reports"
           test -f "$RUNNER_TEMP/ks-reports/Kaleidoscope_Report.md"
-          grep -q '## Executive Synthesis' "$RUNNER_TEMP/ks-reports/Kaleidoscope_Report.md"
+          grep -q '## Exploration Overview' "$RUNNER_TEMP/ks-reports/Kaleidoscope_Report.md"
+          grep -q '## Perspectives' "$RUNNER_TEMP/ks-reports/Kaleidoscope_Report.md"
+          grep -q '## Tensions Between Perspectives' "$RUNNER_TEMP/ks-reports/Kaleidoscope_Report.md"
+          grep -q '## Open Questions' "$RUNNER_TEMP/ks-reports/Kaleidoscope_Report.md"

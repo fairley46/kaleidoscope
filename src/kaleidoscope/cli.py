@@ -67,7 +67,7 @@ def main(argv: list[str] | None = None) -> int:
 
     print("")
     print("Kaleidoscope summary")
-    print(synthesis.executive_synthesis)
+    print(synthesis.exploration_overview)
     print("")
     print("Suggested next steps")
     for item in synthesis.recommendations[:3]:

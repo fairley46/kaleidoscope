@@ -41,7 +41,7 @@ class HeuristicAnalysisProvider:
         analyses: list[LensAnalysis],
     ) -> SynthesisReport:
         themes = _detect_themes(context.combined_text)
-        lens_highlights = [
+        perspectives = [
             f"**{analysis.lens_name}:** {analysis.summary}" for analysis in analyses
         ]
 
@@ -62,21 +62,22 @@ class HeuristicAnalysisProvider:
         )
 
         blind_spots = _build_blind_spots(context, themes)
-        cross_lens_tensions = _build_cross_lens_tensions(themes, analyses)
+        tensions = _build_tensions(themes, analyses)
 
-        executive_synthesis = _compose_executive_synthesis(context, analyses, themes)
+        exploration_overview = _compose_exploration_overview(context, analyses, themes)
         problem_overview = _compose_problem_overview(context)
         confidence_note = _build_confidence_note(context, analyses)
 
         return SynthesisReport(
             problem_overview=problem_overview,
-            executive_synthesis=executive_synthesis,
-            lens_highlights=lens_highlights,
+            exploration_overview=exploration_overview,
+            perspectives=perspectives,
+            reinforcements=[],
+            tensions=tensions,
             blind_spots=blind_spots,
-            cross_lens_tensions=cross_lens_tensions,
-            tradeoffs=aggregated_tradeoffs[:6],
-            recommendations=aggregated_recommendations[:6],
             open_questions=repeated_open_questions[:6],
+            recommendations=aggregated_recommendations[:6],
+            tradeoffs=aggregated_tradeoffs[:6],
             confidence_note=confidence_note,
         )
 
@@ -421,7 +422,7 @@ def _build_analysis(
 def _compose_problem_overview(context: ProblemContext) -> str:
     lines = [f"The starting problem statement is: \"{context.raw_problem.strip()}\""]
     if context.get("decision"):
-        lines.append(f"The concrete decision being weighed appears to be: {context.get('decision')}")
+        lines.append(f"The problem or change being explored appears to be: {context.get('decision')}")
     if context.get("stakeholders"):
         lines.append(f"The most affected stakeholders appear to be: {context.get('stakeholders')}")
     if context.get("success"):
@@ -429,7 +430,7 @@ def _compose_problem_overview(context: ProblemContext) -> str:
     return " ".join(lines)
 
 
-def _compose_executive_synthesis(
+def _compose_exploration_overview(
     context: ProblemContext,
     analyses: list[LensAnalysis],
     themes: set[str],
@@ -479,7 +480,7 @@ def _build_blind_spots(context: ProblemContext, themes: set[str]) -> list[str]:
     ]
 
 
-def _build_cross_lens_tensions(
+def _build_tensions(
     themes: set[str],
     analyses: list[LensAnalysis],
 ) -> list[str]:

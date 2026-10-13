@@ -51,7 +51,12 @@ class ReviewPathTests(unittest.TestCase):
             )
             master = Path(tmp) / "Kaleidoscope_Report.md"
             self.assertTrue(master.exists())
-            self.assertIn("## Executive Synthesis", master.read_text(encoding="utf-8"))
+            report = master.read_text(encoding="utf-8")
+            self.assertIn("## Exploration Overview", report)
+            self.assertIn("## Perspectives", report)
+            self.assertIn("## Where Perspectives Reinforce", report)
+            self.assertIn("## Tensions Between Perspectives", report)
+            self.assertIn("## Open Questions", report)
             self.assertGreaterEqual(len(generated), 6)
 
 
