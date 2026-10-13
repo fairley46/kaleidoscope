@@ -36,7 +36,7 @@ class ReviewPathTests(unittest.TestCase):
             max_questions=6,
         )
         lenses = load_lenses(ROOT / "lenses")
-        self.assertGreaterEqual(len(lenses), 5)
+        self.assertGreaterEqual(len(lenses), 9)
 
         provider = HeuristicAnalysisProvider()
         analyses = analyze_lenses(context=context, lenses=lenses, provider=provider)
@@ -51,8 +51,22 @@ class ReviewPathTests(unittest.TestCase):
             )
             master = Path(tmp) / "Kaleidoscope_Report.md"
             self.assertTrue(master.exists())
-            self.assertIn("## Executive Synthesis", master.read_text(encoding="utf-8"))
-            self.assertGreaterEqual(len(generated), 6)
+            report = master.read_text(encoding="utf-8")
+            self.assertIn("## Exploration Overview", report)
+            self.assertIn("## Perspectives", report)
+            self.assertIn("## Where Perspectives Reinforce", report)
+            self.assertIn("## Tensions Between Perspectives", report)
+            self.assertIn("## Open Questions", report)
+            self.assertIn("From the company angle", report)
+            self.assertIn("From the team angle", report)
+            self.assertIn("From the strategy angle", report)
+            self.assertIn("From the roadmap angle", report)
+            self.assertTrue(synthesis.tensions)
+            self.assertTrue(synthesis.reinforcements)
+            self.assertTrue(
+                any("strategy and roadmap" in item.lower() for item in synthesis.tensions)
+            )
+            self.assertGreaterEqual(len(generated), 10)
 
 
 if __name__ == "__main__":

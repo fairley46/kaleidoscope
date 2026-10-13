@@ -29,7 +29,7 @@ class ProblemContext:
 
     def missing_dimensions(self) -> list[str]:
         dimensions = [
-            ("decision", "the concrete decision or change being weighed"),
+            ("decision", "the problem or change being explored"),
             ("stakeholders", "who is most affected"),
             ("constraints", "the meaningful constraints or non-negotiables"),
             ("success", "what success looks like"),
@@ -71,11 +71,12 @@ class LensAnalysis:
 @dataclass
 class SynthesisReport:
     problem_overview: str
-    executive_synthesis: str
-    lens_highlights: list[str]
+    exploration_overview: str
+    perspectives: list[str]
+    reinforcements: list[str]
+    tensions: list[str]
     blind_spots: list[str]
-    cross_lens_tensions: list[str]
-    tradeoffs: list[str]
-    recommendations: list[str]
     open_questions: list[str]
+    recommendations: list[str]
+    tradeoffs: list[str]
     confidence_note: str

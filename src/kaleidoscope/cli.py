@@ -14,12 +14,12 @@ from kaleidoscope.synthesizer import synthesize_report
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="kaleidoscope",
-        description="Pressure-test an ambiguous engineering decision through multiple diagnostic lenses.",
+        description="Explore a problem from multiple angles and surface how the perspectives fit together.",
     )
     parser.add_argument(
         "problem",
         nargs="?",
-        help="A rough problem statement, decision prompt, or messy working thought.",
+        help="A rough problem statement or working thought to explore.",
     )
     parser.add_argument(
         "--lenses-dir",
@@ -67,12 +67,23 @@ def main(argv: list[str] | None = None) -> int:
 
     print("")
     print("Kaleidoscope summary")
-    print(synthesis.executive_synthesis)
+    print(synthesis.exploration_overview)
     print("")
-    print("Suggested next steps")
-    for item in synthesis.recommendations[:3]:
-        print(f"- {item}")
-    print("")
+    if synthesis.tensions:
+        print("Tensions between perspectives")
+        for item in synthesis.tensions[:3]:
+            print(f"- {item}")
+        print("")
+    if synthesis.open_questions:
+        print("Open questions")
+        for item in synthesis.open_questions[:3]:
+            print(f"- {item}")
+        print("")
+    if synthesis.recommendations:
+        print("Optional next steps")
+        for item in synthesis.recommendations[:3]:
+            print(f"- {item}")
+        print("")
     print("Generated reports")
     for path in generated:
         print(f"- {path}")

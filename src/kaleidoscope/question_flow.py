@@ -15,7 +15,7 @@ class QuestionSpec:
 QUESTION_BANK = [
     QuestionSpec(
         "decision",
-        "What decision, change, or investment are you actually weighing?",
+        "What problem or change are you trying to understand more clearly?",
     ),
     QuestionSpec(
         "stakeholders",
@@ -27,11 +27,11 @@ QUESTION_BANK = [
     ),
     QuestionSpec(
         "success",
-        "What would success look like in six months if this works?",
+        "What would a good outcome look like in six months?",
     ),
     QuestionSpec(
         "options",
-        "What options are already on the table, including doing nothing or waiting?",
+        "What paths are already in view, including waiting or leaving this alone?",
     ),
     QuestionSpec(
         "risks",
@@ -60,7 +60,7 @@ def gather_context(
 ) -> ProblemContext:
     output_func("")
     output_func("Kaleidoscope framing")
-    output_func("Answer briefly. You can skip any question with an empty response.")
+    output_func("Answer briefly so the perspectives have something concrete to work with. Skip any question with an empty response.")
 
     answers: dict[str, str] = {}
     questions_asked = 0
