@@ -70,7 +70,7 @@ def main(argv: list[str] | None = None) -> int:
     print(synthesis.exploration_overview)
     print("")
     if synthesis.tensions:
-        print("Tensions")
+        print("Tensions between perspectives")
         for item in synthesis.tensions[:3]:
             print(f"- {item}")
         print("")

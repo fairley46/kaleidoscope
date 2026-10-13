@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 import textwrap
+from dataclasses import dataclass
 from typing import Protocol
 
 from kaleidoscope.lens_loader import extract_bullets
@@ -17,6 +18,114 @@ PERSPECTIVE_TOKENS: tuple[str, ...] = (
     "operational",
     "financial",
     "user",
+)
+
+
+@dataclass(frozen=True)
+class _PerspectiveRule:
+    themes: frozenset[str]
+    lenses: frozenset[str]
+    kind: str
+    statement: str
+
+
+_PERSPECTIVE_RULES = (
+    _PerspectiveRule(
+        themes=frozenset(),
+        lenses=frozenset({"strategy", "roadmap"}),
+        kind="tension",
+        statement="Strategy and roadmap pull apart when the direction is named and the sequence is still open.",
+    ),
+    _PerspectiveRule(
+        themes=frozenset(),
+        lenses=frozenset({"company", "team"}),
+        kind="tension",
+        statement="Company and team perspectives pull apart when a wider pattern of work meets the load on the people closest to it.",
+    ),
+    _PerspectiveRule(
+        themes=frozenset({"centralization"}),
+        lenses=frozenset({"technical", "operational", "culture", "user"}),
+        kind="tension",
+        statement=(
+            "Technical and operational perspectives can favor a shared path for consistency. "
+            "Culture and user perspectives ask whether teams will experience that path as imposed or heavier."
+        ),
+    ),
+    _PerspectiveRule(
+        themes=frozenset({"migration"}),
+        lenses=frozenset({"technical", "operational", "financial"}),
+        kind="tension",
+        statement=(
+            "The technical perspective may favor the long-term destination. "
+            "Operational and financial perspectives focus on migration drag, transition risk, and a payoff that arrives later."
+        ),
+    ),
+    _PerspectiveRule(
+        themes=frozenset({"reorg"}),
+        lenses=frozenset({"operational", "culture"}),
+        kind="tension",
+        statement=(
+            "Sharper ownership can make operations and accountability easier to see. "
+            "The culture perspective asks whether people will experience the change as a status shift."
+        ),
+    ),
+    _PerspectiveRule(
+        themes=frozenset({"timing"}),
+        lenses=frozenset({"financial", "technical"}),
+        kind="tension",
+        statement=(
+            "The financial perspective may favor waiting for stronger evidence. "
+            "The technical perspective may treat waiting as a way for complexity to compound."
+        ),
+    ),
+    _PerspectiveRule(
+        themes=frozenset({"reliability"}),
+        lenses=frozenset({"technical", "operational"}),
+        kind="tension",
+        statement="A cleaner technical shape can still raise operational risk when incidents would concentrate on one shared path.",
+    ),
+    _PerspectiveRule(
+        themes=frozenset(),
+        lenses=frozenset({"strategy", "company"}),
+        kind="reinforcement",
+        statement="Strategy and company perspectives both ask which longer arc this problem sits inside.",
+    ),
+    _PerspectiveRule(
+        themes=frozenset(),
+        lenses=frozenset({"roadmap", "team"}),
+        kind="reinforcement",
+        statement=(
+            "Roadmap and team perspectives both stay with capacity, including what is already committed "
+            "and who would carry new work."
+        ),
+    ),
+    _PerspectiveRule(
+        themes=frozenset({"centralization"}),
+        lenses=frozenset({"technical", "operational"}),
+        kind="reinforcement",
+        statement=(
+            "Technical and operational perspectives both treat a shared capability as concentrated complexity, "
+            "with fewer duplicated patterns and a larger blast radius when ownership stays vague."
+        ),
+    ),
+    _PerspectiveRule(
+        themes=frozenset({"centralization"}),
+        lenses=frozenset({"culture", "user"}),
+        kind="reinforcement",
+        statement=(
+            "Culture and user perspectives both ask whether people on the receiving end will experience "
+            "the change as support or as new friction."
+        ),
+    ),
+    _PerspectiveRule(
+        themes=frozenset({"reliability"}),
+        lenses=frozenset({"operational", "user"}),
+        kind="reinforcement",
+        statement=(
+            "Operational and user perspectives both treat reliability as something people feel after launch, "
+            "in incidents, support load, and trust in the path."
+        ),
+    ),
 )
 
 
@@ -64,26 +173,19 @@ class HeuristicAnalysisProvider:
             f"**{analysis.lens_name}:** {analysis.summary}" for analysis in analyses
         ]
 
-        present = _present_tokens(analyses)
-        blind_spots = _build_blind_spots(context, themes)
-        tensions = _build_tensions(themes, analyses, present)
-        reinforcements = _build_reinforcements(themes, present)
-
-        exploration_overview = _compose_exploration_overview(context, analyses, themes)
-        problem_overview = _compose_problem_overview(context)
-        confidence_note = _build_confidence_note(context, analyses)
+        reinforcements, tensions = _perspective_relations(themes, analyses)
 
         return SynthesisReport(
-            problem_overview=problem_overview,
-            exploration_overview=exploration_overview,
+            problem_overview=_compose_problem_overview(context),
+            exploration_overview=_compose_exploration_overview(context, analyses, themes),
             perspectives=perspectives,
             reinforcements=reinforcements,
             tensions=tensions,
-            blind_spots=blind_spots,
-            open_questions=_interleave(analyses, "open_questions", 8),
+            blind_spots=_build_blind_spots(context, themes),
+            open_questions=_interleave(analyses, "open_questions", 9),
             recommendations=_interleave(analyses, "recommendations", 6),
             tradeoffs=_interleave(analyses, "tradeoffs", 6),
-            confidence_note=confidence_note,
+            confidence_note=_build_confidence_note(context),
         )
 
     def _technical_analysis(self, context: ProblemContext, lens: LensDefinition) -> LensAnalysis:
@@ -652,37 +754,30 @@ def _compose_exploration_overview(
     themes: set[str],
 ) -> str:
     if {"centralization", "reorg"} & themes:
-        shape = (
-            "This problem is less about a single technical move and more about the operating model "
-            "the organization is reinforcing."
-        )
+        shape = "This reads as a question about which operating model the organization would be reinforcing."
     elif "migration" in themes:
-        shape = (
-            "This problem is as much about migration path and reversibility as about the destination architecture."
-        )
+        shape = "The migration path and the chance to reverse it belong in the exploration alongside the destination."
     elif "timing" in themes:
-        shape = (
-            "Timing and scope are part of the problem itself, not only whether the idea sounds right."
-        )
+        shape = "Whether this is the moment and the scope for the idea is part of the problem."
     else:
-        shape = (
-            "Across the loaded perspectives, the framing is useful enough to explore and still open enough to stay provisional."
-        )
+        shape = "The problem is legible enough to explore, and several perspectives still need a sharper frame."
 
-    caution = (
-        "Ambiguity remains around execution shape, stakeholder impact, and what success would look like in practice."
-    )
     if context.answered_count() >= 5:
         caution = (
-            "The clarifying answers give a usable frame. The perspectives below are for exploration, not a verdict."
+            "The clarifying answers give the exploration a usable frame. "
+            "The perspectives still leave room to pressure-test the shape."
+        )
+    else:
+        caution = (
+            "Ambiguity remains around how the work would run, who feels it, "
+            "and what a better state would look like in practice."
         )
 
-    if analyses:
-        value = " ".join(analysis.summary for analysis in analyses[:2])
-    else:
-        value = "No perspectives were loaded."
-
-    return f"{shape} {caution} {value}"
+    breadth = (
+        f"The notes below cover {len(analyses)} perspectives, "
+        "including where they reinforce one another and where they pull apart."
+    )
+    return f"{shape} {caution} {breadth}"
 
 
 def _build_blind_spots(context: ProblemContext, themes: set[str]) -> list[str]:
@@ -709,95 +804,53 @@ def _build_blind_spots(context: ProblemContext, themes: set[str]) -> list[str]:
     ]
 
 
-def _present_tokens(analyses: list[LensAnalysis]) -> set[str]:
-    present: set[str] = set()
+def _perspective_relations(
+    themes: set[str],
+    analyses: list[LensAnalysis],
+) -> tuple[list[str], list[str]]:
+    loaded = _loaded_perspective_tokens(analyses)
+    reinforcements: list[str] = []
+    tensions: list[str] = []
+    for rule in _PERSPECTIVE_RULES:
+        if rule.kind not in {"tension", "reinforcement"}:
+            raise ValueError(f"Unknown perspective rule kind: {rule.kind}")
+        if not rule.lenses <= loaded:
+            continue
+        if rule.themes and not rule.themes <= themes:
+            continue
+        if rule.kind == "reinforcement":
+            reinforcements.append(rule.statement)
+        else:
+            tensions.append(rule.statement)
+    return _dedupe(reinforcements), _dedupe(tensions)
+
+
+def _loaded_perspective_tokens(analyses: list[LensAnalysis]) -> set[str]:
+    loaded: set[str] = set()
     for analysis in analyses:
         lowered = analysis.lens_name.lower()
         for token in PERSPECTIVE_TOKENS:
             if token in lowered:
-                present.add(token)
+                loaded.add(token)
                 break
-    return present
+    return loaded
 
 
-def _build_tensions(
-    themes: set[str],
-    analyses: list[LensAnalysis],
-    present: set[str],
-) -> list[str]:
-    tensions: list[str] = []
-    if "centralization" in themes and {"technical", "culture"} & present:
-        tensions.append(
-            "Technical and operational consistency may improve with centralization, while culture and user lenses warn that adoption can suffer if teams experience the change as imposed or heavier-weight."
-        )
-    if "reorg" in themes and {"culture", "operational"} & present:
-        tensions.append(
-            "Sharper ownership can help operations and accountability, while culture concerns rise if the change is felt as a status shift or disruption rather than a clearer way to work."
-        )
-    if "migration" in themes and {"technical", "operational"} & present:
-        tensions.append(
-            "The technical lens may favor the long-term destination, while operational and financial lenses emphasize migration drag, transition risk, and delayed payoff."
-        )
-    if "timing" in themes and {"financial", "technical", "strategy", "roadmap"} & present:
-        tensions.append(
-            "Financial discipline may push toward waiting for stronger evidence, while technical debt, strategy direction, or roadmap pressure may argue that waiting compounds the eventual cost."
-        )
-    if {"strategy", "roadmap"}.issubset(present):
-        tensions.append(
-            "Strategy and roadmap can diverge when the directional bet is clear but the sequence, capacity, and what moves on the roadmap stay unresolved."
-        )
-    if {"company", "team"}.issubset(present):
-        tensions.append(
-            "Company and team perspectives can diverge when enterprise mandate and local capacity are both real and not yet reconciled."
-        )
-    if "reliability" in themes and {"operational", "roadmap"} & present:
-        tensions.append(
-            "Operational readiness concerns can sit in tension with roadmap pressure to land a first slice before support and recovery paths are clear."
-        )
-
-    if not tensions and analyses:
-        tensions.extend(
-            analysis.tradeoffs[0]
-            for analysis in analyses
-            if analysis.tradeoffs
-        )
-
-    return _dedupe(tensions)[:6]
-
-
-def _build_reinforcements(themes: set[str], present: set[str]) -> list[str]:
-    reinforcements: list[str] = []
-    if "centralization" in themes and {"technical", "operational"}.issubset(present):
-        reinforcements.append(
-            "Technical and operational perspectives reinforce each other when centralization is framed as reducing duplicated patterns and clarifying day-two ownership of the shared path."
-        )
-    if {"culture", "user"}.issubset(present):
-        reinforcements.append(
-            "Culture and user perspectives reinforce each other when adoption depends on whether people experience the change as relief rather than heavier process."
-        )
-    if {"company", "strategy"}.issubset(present):
-        reinforcements.append(
-            "Company and strategy perspectives reinforce each other when the problem is tied to a named company outcome and an explicit strategic bet."
-        )
-    if "migration" in themes and {"roadmap", "operational"}.issubset(present):
-        reinforcements.append(
-            "Roadmap and operational perspectives reinforce each other when migration success is treated as a sequenced coexistence problem, not only a destination architecture."
-        )
-    if "reorg" in themes and {"team", "operational"}.issubset(present):
-        reinforcements.append(
-            "Team and operational perspectives reinforce each other when sharper ownership is paired with an explicit sustainment and escalation model."
-        )
-    return _dedupe(reinforcements)[:6] or [
-        "No strong cross-perspective reinforcement stood out from the current framing."
-    ]
-
-
-def _build_confidence_note(context: ProblemContext, analyses: list[LensAnalysis]) -> str:
+def _build_confidence_note(context: ProblemContext) -> str:
     if context.answered_count() >= 5:
-        return "Moderate confidence. The problem has enough context for useful pressure-testing, but several conclusions remain conditional because the analysis is heuristic and the evidence base is still local and incomplete."
+        return (
+            "Moderate confidence. The problem has enough context for a useful exploration, "
+            "and the pass is still heuristic with a local, incomplete evidence base."
+        )
     if context.answered_count() >= 3:
-        return "Moderate-to-low confidence. The framing is good enough to surface tensions and blind spots, but recommendations should be treated as prompts for discussion rather than firm guidance."
-    return "Low confidence. The tool can still surface useful questions, but ambiguity in the framing means the outputs should be read as exploratory scaffolding."
+        return (
+            "Moderate-to-low confidence. The framing is good enough to surface tensions and open questions. "
+            "Optional next steps are prompts for further exploration."
+        )
+    return (
+        "Low confidence. The notes can still surface useful questions. "
+        "Ambiguity in the framing means the output is exploratory."
+    )
 
 
 def _context_observations(context: ProblemContext) -> list[str]:
@@ -899,7 +952,6 @@ def _detect_themes(text: str) -> set[str]:
             r"\bre-?org\b",
             r"\bownership\b",
             r"\borg\b",
-            r"\borganization\b",
             r"team boundary",
         ),
         "migration": (
