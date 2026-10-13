@@ -36,7 +36,7 @@ class ReviewPathTests(unittest.TestCase):
             max_questions=6,
         )
         lenses = load_lenses(ROOT / "lenses")
-        self.assertGreaterEqual(len(lenses), 5)
+        self.assertGreaterEqual(len(lenses), 9)
 
         provider = HeuristicAnalysisProvider()
         analyses = analyze_lenses(context=context, lenses=lenses, provider=provider)
@@ -57,7 +57,11 @@ class ReviewPathTests(unittest.TestCase):
             self.assertIn("## Where Perspectives Reinforce", report)
             self.assertIn("## Tensions Between Perspectives", report)
             self.assertIn("## Open Questions", report)
-            self.assertGreaterEqual(len(generated), 6)
+            self.assertIn("From the company angle", report)
+            self.assertIn("From the team angle", report)
+            self.assertIn("From the strategy angle", report)
+            self.assertIn("From the roadmap angle", report)
+            self.assertGreaterEqual(len(generated), 10)
 
 
 if __name__ == "__main__":

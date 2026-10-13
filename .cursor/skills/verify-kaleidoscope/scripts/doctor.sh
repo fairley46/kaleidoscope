@@ -17,8 +17,8 @@ if not cli.is_file():
     raise SystemExit(f"missing {cli}")
 
 lenses = sorted((root / "lenses").glob("*.md"))
-if len(lenses) < 5:
-    raise SystemExit(f"expected >=5 lens files, found {len(lenses)}")
+if len(lenses) < 9:
+    raise SystemExit(f"expected >=9 lens files, found {len(lenses)}")
 
 sys.path.insert(0, str(root / "src"))
 import kaleidoscope.cli  # noqa: F401

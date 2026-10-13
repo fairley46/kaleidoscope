@@ -21,18 +21,24 @@ class AnalysisProvider(Protocol):
 
 
 class HeuristicAnalysisProvider:
+    def __init__(self) -> None:
+        self._analyzers = {
+            "company": self._company_analysis,
+            "team": self._team_analysis,
+            "culture": self._culture_analysis,
+            "strategy": self._strategy_analysis,
+            "roadmap": self._roadmap_analysis,
+            "technical": self._technical_analysis,
+            "operational": self._operational_analysis,
+            "financial": self._financial_analysis,
+            "user": self._user_analysis,
+        }
+
     def analyze_lens(self, context: ProblemContext, lens: LensDefinition) -> LensAnalysis:
         normalized_name = lens.name.lower()
-        if "technical" in normalized_name:
-            return self._technical_analysis(context, lens)
-        if "culture" in normalized_name:
-            return self._culture_analysis(context, lens)
-        if "operational" in normalized_name:
-            return self._operational_analysis(context, lens)
-        if "financial" in normalized_name:
-            return self._financial_analysis(context, lens)
-        if "user" in normalized_name:
-            return self._user_analysis(context, lens)
+        for token, method in self._analyzers.items():
+            if token in normalized_name:
+                return method(context, lens)
         return self._generic_analysis(context, lens)
 
     def synthesize(
@@ -133,7 +139,7 @@ class HeuristicAnalysisProvider:
         return _build_analysis(
             context=context,
             lens=lens,
-            summary="Technically plausible, but the real question is whether the chosen shape reduces future complexity instead of simply concentrating it.",
+            summary="From the technical angle, the open question is whether the chosen shape reduces future complexity or mainly concentrates it.",
             observations=observations,
             risks=risks,
             tradeoffs=tradeoffs,
@@ -180,7 +186,7 @@ class HeuristicAnalysisProvider:
         return _build_analysis(
             context=context,
             lens=lens,
-            summary="The idea may be strategically reasonable, but it will only stick if the people dynamics and incentives around it are deliberately handled.",
+            summary="From the culture angle, the open question is whether people, incentives, and trust will carry this change.",
             observations=observations,
             risks=risks,
             tradeoffs=tradeoffs,
@@ -227,7 +233,7 @@ class HeuristicAnalysisProvider:
         return _build_analysis(
             context=context,
             lens=lens,
-            summary="The proposal should be judged partly on who will run it, support it, and absorb its failures after the initial project energy fades.",
+            summary="From the operational angle, the open question is who runs this, supports it, and absorbs failures after the first push.",
             observations=observations,
             risks=risks,
             tradeoffs=tradeoffs,
@@ -274,7 +280,7 @@ class HeuristicAnalysisProvider:
         return _build_analysis(
             context=context,
             lens=lens,
-            summary="Financially, the case depends on whether this produces meaningful leverage relative to the work and disruption it displaces.",
+            summary="From the financial angle, the open question is whether the effort returns leverage relative to the work and disruption it displaces.",
             observations=observations,
             risks=risks,
             tradeoffs=tradeoffs,
@@ -321,7 +327,7 @@ class HeuristicAnalysisProvider:
         return _build_analysis(
             context=context,
             lens=lens,
-            summary="User value is plausible but should be proven in terms the consuming team can actually feel, not just in internal architecture language.",
+            summary="From the user angle, the open question is whether the people who feel this change will notice a real improvement.",
             observations=observations,
             risks=risks,
             tradeoffs=tradeoffs,
@@ -330,44 +336,255 @@ class HeuristicAnalysisProvider:
             evidence_to_consider=evidence_to_consider,
         )
 
+    def _company_analysis(self, context: ProblemContext, lens: LensDefinition) -> LensAnalysis:
+        themes = _detect_themes(context.combined_text)
+        observations = [
+            "From the company angle, the useful question is which pattern of work this problem would make more normal.",
+            _theme_line(
+                themes,
+                "centralization",
+                "A shared capability changes who sets the default way of working, and that default shows up in later choices across teams.",
+            ),
+            _theme_line(
+                themes,
+                "reorg",
+                "An ownership or structure change reads, at company scale, as a statement about which work the organization wants to keep close.",
+            ),
+            "If the framing stays inside one team, this perspective still asks whether that local shape matches a wider pattern.",
+        ]
+        risks = [
+            "A local fix can harden an operating pattern the organization did not mean to keep.",
+            "Language about alignment can outrun any real change in how work moves.",
+            "Concentrating a capability without a reason other teams would recognize can read as control.",
+        ]
+        tradeoffs = [
+            "A shared company pattern versus room for local variation.",
+            "Moving on a pattern now versus waiting until more teams have felt the same problem.",
+        ]
+        recommendations = [
+            "Name the company pattern this would reinforce, in one sentence a team outside the project would recognize.",
+            "Ask two neighboring teams whether they would describe the same problem.",
+        ]
+        open_questions = [
+            "What pattern of work would this make normal across the organization?",
+            "Who, outside the team closest to the problem, would have to live with that pattern?",
+            "If this became the default, which later choices would get easier and which would get harder?",
+        ]
+        return _build_analysis(
+            context=context,
+            lens=lens,
+            summary="From the company angle, this problem sits inside how the organization sets direction and concentrates work.",
+            observations=observations,
+            risks=risks,
+            tradeoffs=tradeoffs,
+            recommendations=recommendations,
+            open_questions=open_questions,
+            evidence_to_consider=_evidence_from_lens(
+                lens,
+                fallback=[
+                    "How neighboring teams describe the same problem.",
+                    "Earlier changes that became an unstated default.",
+                    "Stated operating principles, and where current work matches them.",
+                ],
+            ),
+        )
+
+    def _team_analysis(self, context: ProblemContext, lens: LensDefinition) -> LensAnalysis:
+        themes = _detect_themes(context.combined_text)
+        observations = [
+            "From the team angle, the useful question is who would carry this after the first push, and what that does to their week.",
+            _theme_line(
+                themes,
+                "reorg",
+                "Moving ownership changes the team that gets interrupted, asked, and blamed when the work slips or breaks.",
+            ),
+            _theme_line(
+                themes,
+                "centralization",
+                "A shared path can remove local variation and still add handoffs for the team that has to wait on the shared owner.",
+            ),
+            "If the proposal names a team and does not name the load, the team perspective still treats the load as part of the problem.",
+        ]
+        risks = [
+            "Long-term ownership can land on a team that was not in the original framing.",
+            "A path that looks simpler on a diagram can add coordination for the people who use it.",
+            "The work can depend on one person's context, with no path for anyone else to hold it.",
+        ]
+        tradeoffs = [
+            "Local speed for the team closest to the work versus a shared path others can join.",
+            "Clear ownership on one team versus spreading the load across teams that already have commitments.",
+        ]
+        recommendations = [
+            "Name the team that would own this six months out, and the load that comes with that ownership.",
+            "Ask the receiving team what they would keep doing the old way if the new path is heavier.",
+        ]
+        open_questions = [
+            "Which team would carry the ongoing work, and do they have room for it?",
+            "What gets easier in the day-to-day, and what gets heavier?",
+            "Which local workaround would teams keep if the new path is harder than the old one?",
+        ]
+        return _build_analysis(
+            context=context,
+            lens=lens,
+            summary="From the team angle, the open question is how the people closest to the work would carry the load, the ownership, and the coordination.",
+            observations=observations,
+            risks=risks,
+            tradeoffs=tradeoffs,
+            recommendations=recommendations,
+            open_questions=open_questions,
+            evidence_to_consider=_evidence_from_lens(
+                lens,
+                fallback=[
+                    "How the affected team describes its current load.",
+                    "Handoffs and waiting that already shape the work.",
+                    "Who gets interrupted when this area breaks today.",
+                ],
+            ),
+        )
+
+    def _strategy_analysis(self, context: ProblemContext, lens: LensDefinition) -> LensAnalysis:
+        themes = _detect_themes(context.combined_text)
+        observations = [
+            "From the strategy angle, the useful question is which longer direction this problem serves.",
+            _theme_line(
+                themes,
+                "centralization",
+                "Centralizing a capability is a direction choice. It makes one shared path easier to repeat and makes divergent local paths harder to defend.",
+            ),
+            _theme_line(
+                themes,
+                "timing",
+                "Starting, waiting, or narrowing the scope would teach the organization different lessons about which direction actually matters.",
+            ),
+            "A framing that sounds like a local fix can still set aside another direction by taking the attention that direction needed.",
+        ]
+        risks = [
+            "A preference with a long time horizon can get called a strategy before anyone names the direction it serves.",
+            "A direction that needs every team to adopt it can proceed with no evidence that they will.",
+            "Attention can move toward one arc while the problem statement never names the arc that lost room.",
+        ]
+        tradeoffs = [
+            "A lasting commitment to one direction versus a smaller probe that teaches whether the direction is real.",
+            "Serving the stated arc versus spending attention on a bet that sits beside it.",
+        ]
+        recommendations = [
+            "Name the longer direction this serves, and name one direction that would lose room.",
+            "Describe a smaller slice that would teach something about that direction before the whole path is treated as settled.",
+        ]
+        open_questions = [
+            "Which longer direction does this problem serve?",
+            "What becomes easier to repeat if this path holds?",
+            "Which other direction loses attention or room if this proceeds?",
+        ]
+        return _build_analysis(
+            context=context,
+            lens=lens,
+            summary="From the strategy angle, the open question is which longer direction this problem serves.",
+            observations=observations,
+            risks=risks,
+            tradeoffs=tradeoffs,
+            recommendations=recommendations,
+            open_questions=open_questions,
+            evidence_to_consider=_evidence_from_lens(
+                lens,
+                fallback=[
+                    "The direction the organization already says it is pursuing.",
+                    "Paths that were set aside, and why.",
+                    "A smaller slice that would teach something about the direction.",
+                ],
+            ),
+        )
+
+    def _roadmap_analysis(self, context: ProblemContext, lens: LensDefinition) -> LensAnalysis:
+        themes = _detect_themes(context.combined_text)
+        observations = [
+            "From the roadmap angle, the useful question is where this sits among work already in motion.",
+            _theme_line(
+                themes,
+                "migration",
+                "A migration is a sequence. The destination matters less, on a roadmap, than who carries the coexistence period and when the old path stops.",
+            ),
+            _theme_line(
+                themes,
+                "timing",
+                "Waiting and starting now are different sequences. Each one changes what else can move in the same window.",
+            ),
+            "If the framing names a direction and does not name what slips, the roadmap perspective still treats the slip as part of the problem.",
+        ]
+        risks = [
+            "The work can land on a roadmap as if the people on the critical path were free.",
+            "A coexistence period can start with no owner and no point where the old path stops.",
+            "Other commitments can slip without being named.",
+        ]
+        tradeoffs = [
+            "A smaller first slice that fits the current sequence versus a full cutover that displaces other commitments.",
+            "Starting while the critical people are already committed versus waiting for a window that may not arrive cleanly.",
+        ]
+        recommendations = [
+            "Place this beside the commitments already in the same window, and name what would shrink or wait.",
+            "Describe the coexistence period, including who owns it and what has to be true before the old path stops.",
+        ]
+        open_questions = [
+            "What is already committed in the same window this would occupy?",
+            "What has to happen first, and what can wait until after a smaller slice?",
+            "What would waiting change about the sequence, and what would starting now change?",
+        ]
+        return _build_analysis(
+            context=context,
+            lens=lens,
+            summary="From the roadmap angle, the open question is where this sits among work already in motion.",
+            observations=observations,
+            risks=risks,
+            tradeoffs=tradeoffs,
+            recommendations=recommendations,
+            open_questions=open_questions,
+            evidence_to_consider=_evidence_from_lens(
+                lens,
+                fallback=[
+                    "Work already committed for the same people and the same window.",
+                    "Dependencies that gate the first useful slice.",
+                    "What would slip or wait if this entered the sequence.",
+                ],
+            ),
+        )
+
     def _generic_analysis(self, context: ProblemContext, lens: LensDefinition) -> LensAnalysis:
         key_questions = extract_bullets(lens.section("key questions"))
         what_it_looks_for = extract_bullets(lens.section("what this lens looks for"))
         common_risks = extract_bullets(lens.section("common risks / failure modes"))
         signals = extract_bullets(lens.section("signals or evidence to consider"))
-        recommendation_style = lens.section("recommendation style")
         purpose = lens.section("purpose")
 
-        summary = textwrap.shorten(
-            purpose or f"This lens provides an additional perspective on the decision.",
-            width=180,
-            placeholder="...",
-        )
+        aim = purpose.strip().splitlines()[0].strip().rstrip(".") if purpose else ""
+        if aim:
+            lowered_aim = aim[0].lower() + aim[1:]
+            summary = textwrap.shorten(
+                f"From this perspective, the aim is to {lowered_aim}.",
+                width=220,
+                placeholder="...",
+            )
+        else:
+            summary = "This perspective looks at the problem from an angle the named lenses may leave aside."
         observations = [
-            f"This lens matters because {summary[0].lower() + summary[1:] if summary else 'it introduces a distinct point of view.'}",
-            "The current problem framing should be tested against this lens directly rather than assumed to be covered by the default set of concerns.",
+            "Read the problem through this perspective on its own, in case the named lenses do not cover it.",
         ]
         observations.extend(
-            f"From this lens, pay attention to {item.rstrip('.')}."
+            f"This perspective looks for {item.rstrip('.')}."
             for item in what_it_looks_for[:3]
         )
 
         risks = common_risks[:3] or [
-            "The decision could be under-evaluated if this perspective is acknowledged but not translated into concrete questions or evidence.",
+            "This perspective can be named in the framing and still never turned into a concrete question.",
         ]
         tradeoffs = [
-            "Depth from this specialized lens versus the time and coordination needed to gather the right evidence.",
-            "Acting on directional confidence now versus delaying for sharper evidence from this perspective.",
+            "Time spent on this perspective versus time spent gathering evidence for the perspectives already in the room.",
+            "Moving with the current frame versus waiting until this perspective has something specific to say.",
         ]
         recommendations = [
-            "Use this lens to challenge the current framing, not just to confirm what the other lenses already suggest.",
+            "Ask what this perspective notices that the others have not asked yet.",
         ]
-        if recommendation_style:
-            recommendations.append(
-                f"Shape recommendations in this tone: {textwrap.shorten(recommendation_style, width=140, placeholder='...')}"
-            )
         open_questions = key_questions[:4] or [
-            "What would this lens notice that the default lenses might miss?",
+            "What would this perspective notice that the named lenses might miss?",
         ]
         evidence_to_consider = signals[:4] or [
             "Any direct evidence or stakeholder input that specifically grounds this lens.",
