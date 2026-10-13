@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install
+        run: pip install -e .
+      - name: Unit tests
+        run: python -m unittest discover -s tests -v
+      - name: CLI smoke
+        run: |
+          printf '%s\n' \
+            'Whether to centralize platform auth' \
+            'Platform and product engineering' \
+            'Headcount and timeline' \
+            'Clear ownership with no outage spike' \
+            'Centralize now; stay federated; phased rollout' \
+            'Auth drift and onboarding cost' \
+          | kaleidoscope "We should centralize auth, but I worry about downstream ownership." \
+            --max-questions 6 \
+            --reports-dir "$RUNNER_TEMP/ks-reports"
+          test -f "$RUNNER_TEMP/ks-reports/Kaleidoscope_Report.md"
+          grep -q '## Executive Synthesis' "$RUNNER_TEMP/ks-reports/Kaleidoscope_Report.md"

@@ -11,3 +11,6 @@ build/
 # Local thinking artifacts stay on disk and out of version control.
 reports/*.md
 !reports/.gitignore
+
+# Local agent audit logs
+.audit/
