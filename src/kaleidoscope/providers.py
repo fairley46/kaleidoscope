@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import re
 import textwrap
-from dataclasses import dataclass
 from typing import Protocol
 
 from kaleidoscope.lens_loader import extract_bullets
