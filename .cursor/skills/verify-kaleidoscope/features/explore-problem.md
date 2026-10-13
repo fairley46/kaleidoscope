@@ -24,7 +24,7 @@ Preconditions:
 
 - **Run explore.** Pipe six short answers into an isolated run. Run `scripts/run-isolated.sh explore-1 "We should centralize auth, but I worry about downstream ownership."` with answers on stdin. Exit code is `0`.
 - **Confirm framing.** Read `stdout.txt`. It contains `Kaleidoscope framing` and `Kaleidoscope summary`.
-- **Confirm master report.** Read `Kaleidoscope_Report.md` in the artifact dir. It contains `## Problem Overview`, perspective or lens highlight content, tension content, and `## Open Questions`.
+- **Confirm master report.** Read `Kaleidoscope_Report.md` in the artifact dir. It contains `## Exploration Overview`, `## Perspectives`, `## Where Perspectives Reinforce`, `## Tensions Between Perspectives`, and `## Open Questions`.
 - **Proof.** Keep `stdout.txt`, `exit_code.txt`, and `Kaleidoscope_Report.md` under the artifact root for this run id.
 
 ## Gotchas

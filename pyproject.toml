@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "kaleidoscope"
 version = "0.1.0"
-description = "A local-first pre-decision review tool for engineering leaders."
+description = "Explore a problem from multiple angles and see how the perspectives fit together."
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = []

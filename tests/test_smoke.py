@@ -61,6 +61,11 @@ class ReviewPathTests(unittest.TestCase):
             self.assertIn("From the team angle", report)
             self.assertIn("From the strategy angle", report)
             self.assertIn("From the roadmap angle", report)
+            self.assertTrue(synthesis.tensions)
+            self.assertTrue(synthesis.reinforcements)
+            self.assertTrue(
+                any("strategy and roadmap" in item.lower() for item in synthesis.tensions)
+            )
             self.assertGreaterEqual(len(generated), 10)
 
 

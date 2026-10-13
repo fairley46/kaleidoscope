@@ -1,11 +1,24 @@
 from __future__ import annotations
 
+import re
 import textwrap
 from collections import Counter
 from typing import Protocol
 
 from kaleidoscope.lens_loader import extract_bullets
 from kaleidoscope.models import LensAnalysis, LensDefinition, ProblemContext, SynthesisReport
+
+PERSPECTIVE_TOKENS: tuple[str, ...] = (
+    "company",
+    "team",
+    "culture",
+    "strategy",
+    "roadmap",
+    "technical",
+    "operational",
+    "financial",
+    "user",
+)
 
 
 class AnalysisProvider(Protocol):
@@ -22,7 +35,7 @@ class AnalysisProvider(Protocol):
 
 class HeuristicAnalysisProvider:
     def __init__(self) -> None:
-        self._analyzers = {
+        by_token = {
             "company": self._company_analysis,
             "team": self._team_analysis,
             "culture": self._culture_analysis,
@@ -33,6 +46,7 @@ class HeuristicAnalysisProvider:
             "financial": self._financial_analysis,
             "user": self._user_analysis,
         }
+        self._analyzers = {token: by_token[token] for token in _PERSPECTIVE_TOKENS}
 
     def analyze_lens(self, context: ProblemContext, lens: LensDefinition) -> LensAnalysis:
         normalized_name = lens.name.lower()
@@ -67,8 +81,10 @@ class HeuristicAnalysisProvider:
             for item in analysis.recommendations
         )
 
+        present = _present_tokens(analyses)
         blind_spots = _build_blind_spots(context, themes)
-        tensions = _build_tensions(themes, analyses)
+        tensions = _build_tensions(themes, analyses, present)
+        reinforcements = _build_reinforcements(themes, present)
 
         exploration_overview = _compose_exploration_overview(context, analyses, themes)
         problem_overview = _compose_problem_overview(context)
@@ -78,12 +94,12 @@ class HeuristicAnalysisProvider:
             problem_overview=problem_overview,
             exploration_overview=exploration_overview,
             perspectives=perspectives,
-            reinforcements=[],
+            reinforcements=reinforcements,
             tensions=tensions,
             blind_spots=blind_spots,
-            open_questions=repeated_open_questions[:6],
-            recommendations=aggregated_recommendations[:6],
-            tradeoffs=aggregated_tradeoffs[:6],
+            open_questions=_interleave_questions(analyses)[:8] or repeated_open_questions[:6],
+            recommendations=_interleave_field(analyses, "recommendations")[:6] or aggregated_recommendations[:6],
+            tradeoffs=_interleave_field(analyses, "tradeoffs")[:6] or aggregated_tradeoffs[:6],
             confidence_note=confidence_note,
         )
 
@@ -653,22 +669,35 @@ def _compose_exploration_overview(
     themes: set[str],
 ) -> str:
     if {"centralization", "reorg"} & themes:
-        shape = "The decision is less about a single technical move and more about what operating model the organization wants to reinforce."
+        shape = (
+            "This problem is less about a single technical move and more about the operating model "
+            "the organization is reinforcing."
+        )
     elif "migration" in themes:
-        shape = "The decision appears strategically promising, but the migration path and reversibility may matter more than the destination architecture alone."
+        shape = (
+            "This problem is as much about migration path and reversibility as about the destination architecture."
+        )
     elif "timing" in themes:
-        shape = "The biggest question is not simply whether the idea is good, but whether this is the right time and scope for it."
+        shape = (
+            "Timing and scope are part of the problem itself, not only whether the idea sounds right."
+        )
     else:
-        shape = "Across the lenses, the idea looks directionally plausible but still benefits from tighter framing before a firm commitment."
+        shape = (
+            "Across the loaded perspectives, the framing is useful enough to explore and still open enough to stay provisional."
+        )
 
-    caution = "The strongest pattern across reviews is that ambiguity remains around execution shape, stakeholder impact, and what success would concretely look like."
+    caution = (
+        "Ambiguity remains around execution shape, stakeholder impact, and what success would look like in practice."
+    )
     if context.answered_count() >= 5:
-        caution = "The clarifying answers create a more usable frame, but the reviews still suggest pressure-testing the plan before locking into a single course."
+        caution = (
+            "The clarifying answers give a usable frame. The perspectives below are for exploration, not a verdict."
+        )
 
-    value = "The likely value of moving forward will depend on whether the chosen path makes complexity, coordination, and user impact better in practice rather than better only on paper."
     if analyses:
-        summary_lines = [analysis.summary for analysis in analyses[:2]]
-        value = " ".join(summary_lines)
+        value = " ".join(analysis.summary for analysis in analyses[:2])
+    else:
+        value = "No perspectives were loaded."
 
     return f"{shape} {caution} {value}"
 
@@ -697,26 +726,50 @@ def _build_blind_spots(context: ProblemContext, themes: set[str]) -> list[str]:
     ]
 
 
+def _present_tokens(analyses: list[LensAnalysis]) -> set[str]:
+    present: set[str] = set()
+    for analysis in analyses:
+        lowered = analysis.lens_name.lower()
+        for token in PERSPECTIVE_TOKENS:
+            if token in lowered:
+                present.add(token)
+                break
+    return present
+
+
 def _build_tensions(
     themes: set[str],
     analyses: list[LensAnalysis],
+    present: set[str],
 ) -> list[str]:
     tensions: list[str] = []
-    if "centralization" in themes:
+    if "centralization" in themes and {"technical", "culture"} & present:
         tensions.append(
             "Technical and operational consistency may improve with centralization, while culture and user lenses warn that adoption can suffer if teams experience the change as imposed or heavier-weight."
         )
-    if "reorg" in themes:
+    if "reorg" in themes and {"culture", "operational"} & present:
         tensions.append(
             "Sharper ownership can help operations and accountability, while culture concerns rise if the change is felt as a status shift or disruption rather than a clearer way to work."
         )
-    if "migration" in themes:
+    if "migration" in themes and {"technical", "operational"} & present:
         tensions.append(
             "The technical lens may favor the long-term destination, while operational and financial lenses emphasize migration drag, transition risk, and delayed payoff."
         )
-    if "timing" in themes:
+    if "timing" in themes and {"financial", "technical", "strategy", "roadmap"} & present:
         tensions.append(
-            "Financial discipline may push toward waiting for stronger evidence, while technical debt or platform direction may argue that waiting compounds the eventual cost."
+            "Financial discipline may push toward waiting for stronger evidence, while technical debt, strategy direction, or roadmap pressure may argue that waiting compounds the eventual cost."
+        )
+    if {"strategy", "roadmap"}.issubset(present):
+        tensions.append(
+            "Strategy and roadmap can diverge when the directional bet is clear but the sequence, capacity, and what moves on the roadmap stay unresolved."
+        )
+    if {"company", "team"}.issubset(present):
+        tensions.append(
+            "Company and team perspectives can diverge when enterprise mandate and local capacity are both real and not yet reconciled."
+        )
+    if "reliability" in themes and {"operational", "roadmap"} & present:
+        tensions.append(
+            "Operational readiness concerns can sit in tension with roadmap pressure to land a first slice before support and recovery paths are clear."
         )
 
     if not tensions and analyses:
@@ -726,7 +779,65 @@ def _build_tensions(
             if analysis.tradeoffs
         )
 
-    return _dedupe(tensions)[:5]
+    return _dedupe(tensions)[:6]
+
+
+def _build_reinforcements(themes: set[str], present: set[str]) -> list[str]:
+    reinforcements: list[str] = []
+    if "centralization" in themes and {"technical", "operational"}.issubset(present):
+        reinforcements.append(
+            "Technical and operational perspectives reinforce each other when centralization is framed as reducing duplicated patterns and clarifying day-two ownership of the shared path."
+        )
+    if {"culture", "user"}.issubset(present):
+        reinforcements.append(
+            "Culture and user perspectives reinforce each other when adoption depends on whether people experience the change as relief rather than heavier process."
+        )
+    if {"company", "strategy"}.issubset(present):
+        reinforcements.append(
+            "Company and strategy perspectives reinforce each other when the problem is tied to a named company outcome and an explicit strategic bet."
+        )
+    if "migration" in themes and {"roadmap", "operational"}.issubset(present):
+        reinforcements.append(
+            "Roadmap and operational perspectives reinforce each other when migration success is treated as a sequenced coexistence problem, not only a destination architecture."
+        )
+    if "reorg" in themes and {"team", "operational"}.issubset(present):
+        reinforcements.append(
+            "Team and operational perspectives reinforce each other when sharper ownership is paired with an explicit sustainment and escalation model."
+        )
+    return _dedupe(reinforcements)[:6] or [
+        "No strong cross-perspective reinforcement stood out from the current framing."
+    ]
+
+
+def _interleave_field(analyses: list[LensAnalysis], field_name: str) -> list[str]:
+    buckets = [list(getattr(analysis, field_name)) for analysis in analyses]
+    return _interleave_buckets(buckets)
+
+
+def _interleave_questions(analyses: list[LensAnalysis]) -> list[str]:
+    return _interleave_buckets([list(analysis.open_questions) for analysis in analyses])
+
+
+def _interleave_buckets(buckets: list[list[str]]) -> list[str]:
+    result: list[str] = []
+    seen: set[str] = set()
+    index = 0
+    while True:
+        progressed = False
+        for bucket in buckets:
+            if index >= len(bucket):
+                continue
+            item = bucket[index].strip()
+            progressed = True
+            key = item.lower()
+            if not item or key in seen:
+                continue
+            seen.add(key)
+            result.append(item)
+        if not progressed:
+            break
+        index += 1
+    return result
 
 
 def _build_confidence_note(context: ProblemContext, analyses: list[LensAnalysis]) -> str:
@@ -783,12 +894,28 @@ def _evidence_from_lens(lens: LensDefinition, fallback: list[str]) -> list[str]:
     return bullets[:4] or fallback
 
 
-def _top_items(items) -> list[str]:
-    ordered_unique: list[str] = []
-    counter = Counter(item for item in items if item)
-    for item, _ in counter.most_common():
-        ordered_unique.append(item)
-    return ordered_unique
+def _interleave(analyses: list[LensAnalysis], field_name: str, limit: int) -> list[str]:
+    buckets = [list(getattr(analysis, field_name)) for analysis in analyses]
+    chosen: list[str] = []
+    seen: set[str] = set()
+    depth = 0
+    while len(chosen) < limit:
+        progressed = False
+        for bucket in buckets:
+            if depth >= len(bucket):
+                continue
+            progressed = True
+            item = bucket[depth].strip()
+            key = item.lower()
+            if item and key not in seen:
+                seen.add(key)
+                chosen.append(item)
+                if len(chosen) >= limit:
+                    break
+        if not progressed:
+            break
+        depth += 1
+    return chosen
 
 
 def _dedupe(items) -> list[str]:
@@ -809,17 +936,48 @@ def _dedupe(items) -> list[str]:
 def _detect_themes(text: str) -> set[str]:
     lowered = text.lower()
     theme_map = {
-        "centralization": ("centralize", "centralized", "shared platform", "platform capability", "standardize"),
-        "reorg": ("re-org", "reorg", "ownership", "org", "team boundary"),
-        "migration": ("migration", "migrate", "cutover", "sunset", "replace"),
-        "timing": ("wait", "defer", "later", "now", "timing", "investment"),
-        "reliability": ("incident", "reliability", "outage", "resilience", "support burden"),
+        "centralization": (
+            r"\bcentralize\b",
+            r"\bcentralized\b",
+            r"shared platform",
+            r"platform capability",
+            r"\bstandardize\b",
+        ),
+        "reorg": (
+            r"\bre-?org\b",
+            r"\bownership\b",
+            r"\borg\b",
+            r"\borganization\b",
+            r"team boundary",
+        ),
+        "migration": (
+            r"\bmigration\b",
+            r"\bmigrate\b",
+            r"\bcutover\b",
+            r"\bsunset\b",
+            r"\breplace\b",
+        ),
+        "timing": (
+            r"\bwait\b",
+            r"\bdefer\b",
+            r"\blater\b",
+            r"\bnow\b",
+            r"\btiming\b",
+            r"\binvestment\b",
+            r"phased rollout",
+        ),
+        "reliability": (
+            r"\bincident\b",
+            r"\breliability\b",
+            r"\boutage\b",
+            r"\bresilience\b",
+            r"support burden",
+        ),
     }
-    themes = {
-        theme
-        for theme, keywords in theme_map.items()
-        if any(keyword in lowered for keyword in keywords)
-    }
+    themes: set[str] = set()
+    for theme, patterns in theme_map.items():
+        if any(re.search(pattern, lowered) for pattern in patterns):
+            themes.add(theme)
     return themes
 
 

@@ -2,19 +2,28 @@
 
 [![CI](https://github.com/fairley46/kaleidoscope/actions/workflows/ci.yml/badge.svg)](https://github.com/fairley46/kaleidoscope/actions/workflows/ci.yml)
 
-Local-first CLI that reviews an ambiguous engineering decision with markdown lenses and writes the reviews to disk.
+Kaleidoscope helps you think about a problem from multiple angles. It gathers perspectives from the company, team, culture, strategy, and roadmap, alongside technical, operational, financial, and user views, and shows how those perspectives fit together.
+
+It is not mainly a decision tool. People do better work when they have the reasoning, not just the conclusion.
 
 ![Kaleidoscope CLI demo](docs/demo.png)
 
-## Pitch
+## What it does
 
-You start with a rough problem statement. Kaleidoscope asks a short set of clarifying questions, then reviews the problem with the Technical, Culture, Operational, Financial, and User lenses. It writes one review per lens and a master report under `reports/`.
+You start with a rough problem statement. Kaleidoscope asks a short set of clarifying questions, then explores the problem through markdown lenses. It writes one review per lens and a master report under `reports/`.
 
-It is a private pre-decision review for engineering leaders.
+The master report shows:
 
-## Why
+- each perspective
+- where perspectives reinforce each other
+- tensions between them
+- open questions
 
-Kaleidoscope writes the rough problem statement to markdown on your machine. You can edit the files and reread them before you share the decision.
+Optional next steps stay secondary. The point is the path through the problem, not a verdict.
+
+## Why local files
+
+Kaleidoscope writes markdown on your machine. You can edit the files, reread them, and share the reasoning when you are ready.
 
 V1 analysis is `HeuristicAnalysisProvider` in `providers.py`. That class uses only the Python standard library. `cli.py` constructs it. A model-backed provider can implement `AnalysisProvider`.
 
@@ -44,6 +53,15 @@ PYTHONPATH=src python3 -m kaleidoscope "This migration seems technically right b
 
 Each run writes one `*_Review.md` per lens and `reports/Kaleidoscope_Report.md`. Git ignores generated files in `reports/`.
 
+## Lenses
+
+Default lenses:
+
+- Company, Team, Culture, Strategy, Roadmap
+- Technical, Operational, Financial, User
+
+Copy `templates/Lens_Template.md` into `lenses/` and run Kaleidoscope again. The loader reads every `.md` file in that directory.
+
 ## Architecture
 
 ```text
@@ -59,10 +77,8 @@ kaleidoscope/
     analyzer.py           # per-lens analysis
     synthesizer.py        # cross-lens synthesis
     report_writer.py      # markdown report output
-  tests/                  # unittest smoke test
+  tests/                  # unittest smoke tests
 ```
-
-Copy `templates/Lens_Template.md` into `lenses/` and run Kaleidoscope again. The loader reads every `.md` file in that directory.
 
 ## Status
 
