@@ -2,25 +2,27 @@
 
 [![CI](https://github.com/fairley46/kaleidoscope/actions/workflows/ci.yml/badge.svg)](https://github.com/fairley46/kaleidoscope/actions/workflows/ci.yml)
 
-Kaleidoscope explores a problem from multiple perspectives and writes the notes to disk.
+Local CLI that runs a problem through markdown lenses and writes the notes to disk.
 
 ![Kaleidoscope CLI demo](docs/demo.png)
 
 ## What it does
 
-You start with a rough problem statement. Kaleidoscope asks a short set of clarifying questions, then reads the problem through nine perspectives: Company, Team, Culture, Strategy, Roadmap, Technical, Operational, Financial, and User. It writes one note per perspective and a master report under `reports/`.
+You give it a rough problem statement. It asks a few clarifying questions, then runs the loaded lenses. Each lens gets a review file. The run also writes a master report under `reports/`.
 
-The master report leads with an exploration overview. Then it lists each perspective, where those perspectives reinforce each other, tensions between them, and open questions. Optional next steps sit in a later section.
+Default lenses: Company, Team, Culture, Strategy, Roadmap, Technical, Operational, Financial, and User.
+
+The master report includes an overview, each perspective, where perspectives reinforce each other, tensions between them, open questions, and optional next steps.
 
 ## Local files
 
-Kaleidoscope writes markdown on your machine. You can edit the files and reread them before you share them.
+Output is markdown on your machine. Edit and reread it as needed.
 
-V1 analysis is `HeuristicAnalysisProvider` in `providers.py`. That class uses the Python standard library only. `cli.py` constructs it. Another provider can implement `AnalysisProvider`.
+V1 analysis is `HeuristicAnalysisProvider` in `providers.py`. It uses the Python standard library only. `cli.py` constructs it. Another provider can implement `AnalysisProvider`.
 
 ## Quickstart
 
-You need Python 3.9 or newer.
+Python 3.9 or newer.
 
 ```bash
 git clone https://github.com/fairley46/kaleidoscope.git
@@ -30,13 +32,13 @@ source .venv/bin/activate
 pip install -e .
 ```
 
-Run a rough prompt. Type the answers at the prompts, or pipe them on stdin:
+Run with a prompt. Type answers at the prompts, or pipe them on stdin:
 
 ```bash
 kaleidoscope "We should centralize this platform capability, but I am worried about downstream effects."
 ```
 
-Without installing the console script:
+Without the console script:
 
 ```bash
 PYTHONPATH=src python3 -m kaleidoscope "This migration seems technically right but organizationally risky."
@@ -44,11 +46,9 @@ PYTHONPATH=src python3 -m kaleidoscope "This migration seems technically right b
 
 Each run writes one `*_Review.md` per lens and `reports/Kaleidoscope_Report.md`. Git ignores generated files in `reports/`.
 
-## Lenses
+## Custom lenses
 
-The default lenses are Company, Team, Culture, Strategy, Roadmap, Technical, Operational, Financial, and User.
-
-Copy `templates/Lens_Template.md` into `lenses/` and run Kaleidoscope again. The loader reads every `.md` file in that directory.
+Copy `templates/Lens_Template.md` into `lenses/` and run again. The loader reads every `.md` file in that directory.
 
 ## Layout
 
@@ -70,7 +70,7 @@ kaleidoscope/
 
 ## Status
 
-This is a V1 prototype. `HeuristicAnalysisProvider` does not call a model. There is no web interface, authentication, or shared editing.
+V1 prototype. `HeuristicAnalysisProvider` does not call a model. No web UI, auth, or shared editing.
 
 ## License
 
