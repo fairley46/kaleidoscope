@@ -46,7 +46,7 @@ class HeuristicAnalysisProvider:
             "financial": self._financial_analysis,
             "user": self._user_analysis,
         }
-        self._analyzers = {token: by_token[token] for token in _PERSPECTIVE_TOKENS}
+        self._analyzers = {token: by_token[token] for token in PERSPECTIVE_TOKENS}
 
     def analyze_lens(self, context: ProblemContext, lens: LensDefinition) -> LensAnalysis:
         normalized_name = lens.name.lower()
